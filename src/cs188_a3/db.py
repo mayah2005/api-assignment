@@ -14,6 +14,7 @@ class Database:
         self.conn.row_factory = sqlite3.Row  # rows support access by column name
         self.create_users_table()
         self.create_roster_table()
+        self.create_teams_tables()
 
     def create_users_table(self) -> None:
         """Create the users table if it does not exist."""
@@ -131,7 +132,75 @@ class Database:
 
     def delete_entry(self, entry_id: int) -> None:
         with self.conn:
-            self.conn.execute("DELETE FROM roster WHERE id = ?", (entry_id,))
+            self.conn.execute("DELETE FROM team_members WHERE roster_id = ?", (entry_id,))
+            self.conn.execute("DELETE FROM roster WHERE id = ?", (entry_id,))    
+
+    def create_teams_tables(self) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS teams (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    owner_id INTEGER NOT NULL REFERENCES users(id),
+                    name TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
+            self.conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS team_members (
+                    team_id INTEGER NOT NULL REFERENCES teams(id),
+                    roster_id INTEGER NOT NULL REFERENCES roster(id),
+                    PRIMARY KEY (team_id, roster_id)
+                )
+                """
+            )
+
+    def add_team(self, owner_id: int, name: str, member_ids: list[int]) -> int:
+        created_at = datetime.now(timezone.utc).isoformat()  # set by the server
+        with self.conn:
+            cursor = self.conn.execute(
+                "INSERT INTO teams (owner_id, name, created_at) VALUES (?, ?, ?)",
+                (owner_id, name, created_at),
+            )
+            team_id = cursor.lastrowid
+            self.conn.executemany(
+                "INSERT INTO team_members (team_id, roster_id) VALUES (?, ?)",
+                [(team_id, member_id) for member_id in member_ids],
+            )
+        return team_id
+
+    def _get_member_ids(self, team_id: int) -> list[int]:
+        rows = self.conn.execute(
+            "SELECT roster_id FROM team_members WHERE team_id = ? ORDER BY roster_id",
+            (team_id,),
+        ).fetchall()
+        return [row[0] for row in rows]
+
+    def get_team(self, team_id: int) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM teams WHERE id = ?", (team_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        team = dict(row)
+        team["member_ids"] = self._get_member_ids(team_id)
+        return team
+
+    def list_teams(self, limit: int, offset: int) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            "SELECT * FROM teams ORDER BY id LIMIT ? OFFSET ?", (limit, offset)
+        ).fetchall()
+        teams = [dict(row) for row in rows]
+        for team in teams:
+            team["member_ids"] = self._get_member_ids(team["id"])
+        return teams
+
+    def delete_team(self, team_id: int) -> None:
+        with self.conn:
+            self.conn.execute("DELETE FROM team_members WHERE team_id = ?", (team_id,))
+            self.conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
 
 def get_db() -> Database:
     if "db" not in g:

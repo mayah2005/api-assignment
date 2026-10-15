@@ -83,3 +83,54 @@ class RosterEntry(Resource):
         except services.Forbidden:
             return {"message": "You do not own this roster entry"}, 403
         return "", 204
+
+class TeamList(Resource):
+    def get(self) -> tuple[Any, int]:
+        """List teams, paged by limit and offset."""
+        try:
+            return services.list_teams(get_db(), request.args), 200
+        except services.InvalidInput as err:
+            return {"message": str(err)}, 400
+
+    @auth_required
+    def post(self) -> tuple[Any, int, dict[str, str]]:
+        """Create a team owned by the caller."""
+        try:
+            team = services.create_team(get_db(), g.user_id, parse_json_object())
+        except services.InvalidInput as err:
+            return {"message": str(err)}, 400
+        except services.Forbidden:
+            return {"message": "You can only add your own roster entries"}, 403
+        location = url_for("team_detail", team_id=team["id"], _external=True)
+        return team, 201, {"Location": location}
+
+class TeamDetail(Resource):
+    def get(self, team_id: int) -> tuple[Any, int]:
+        """Return one team with its members."""
+        try:
+            return services.get_team(get_db(), team_id), 200
+        except services.NotFound:
+            return {"message": "Team not found"}, 404
+
+    @auth_required
+    def delete(self, team_id: int) -> tuple[Any, int]:
+        """Delete a team the caller owns."""
+        try:
+            services.delete_team(get_db(), g.user_id, team_id)
+        except services.NotFound:
+            return {"message": "Team not found"}, 404
+        except services.Forbidden:
+            return {"message": "You do not own this team"}, 403
+        return "", 204
+
+class TeamReactions(Resource):
+    """Elemental reactions possible within a team, using the external API."""
+
+    def get(self, team_id: int) -> tuple[Any, int]:
+        """Return the reactions between the elements on a team."""
+        try:
+            return services.team_reactions(get_db(), team_id), 200
+        except services.NotFound:
+            return {"message": "Team not found"}, 404
+        except services.ServiceUnavailable as err:
+            return {"message": str(err)}, 502

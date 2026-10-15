@@ -8,7 +8,7 @@ from flask_talisman import Talisman
 
 from cs188_a3._constants import PROJECT_ROOT
 from cs188_a3.db import DEFAULT_DB_PATH
-from cs188_a3.resources import Register, RosterEntry, RosterList
+from cs188_a3.resources import Register, RosterEntry, RosterList, TeamDetail, TeamList
 
 _KEYFILE_PATH = os.path.join(PROJECT_ROOT, "MyKey.pem")
 _CERTIFICATE_PATH = os.path.join(PROJECT_ROOT, "MyCertificate.crt")
@@ -21,6 +21,8 @@ def init_api(app: Flask) -> Api:
     api.add_resource(Register, "/register")
     api.add_resource(RosterList, "/roster", endpoint="roster_list")
     api.add_resource(RosterEntry, "/roster/<int:entry_id>", endpoint="roster_entry")
+    api.add_resource(TeamList, "/teams", endpoint="team_list")
+    api.add_resource(TeamDetail, "/teams/<int:team_id>", endpoint="team_detail")
     return api
 
 def create_app(db_path: str | Path = DEFAULT_DB_PATH) -> Flask:
