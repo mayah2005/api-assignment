@@ -125,7 +125,7 @@ def _clean_fields(fields: Mapping[str, Any], *, partial: bool) -> dict[str, Any]
 def _character_details(slug: str) -> dict[str, Any]:
     try:
         data = external.fetch_character(slug)
-    except external.CharacterNotFound:
+    except external.EntityNotFound:
         raise InvalidInput(f"Unknown character: {slug}") from None
     except external.ExternalServiceUnavailable as err:
         raise ServiceUnavailable("Character data service is unavailable") from err
@@ -141,7 +141,6 @@ def create_entry(db: Database, user_id: int, fields: Mapping[str, Any]) -> dict[
     cleaned.setdefault("notes", None)
     cleaned.update(_character_details(cleaned["character"]))
     return get_entry(db, db.add_entry(user_id, cleaned))
-
 
 def get_entry(db: Database, entry_id: int) -> dict[str, Any]:
     entry = db.get_entry(entry_id) if 0 < entry_id <= MAX_SQLITE_INT else None
@@ -234,7 +233,6 @@ def get_team(db: Database, team_id: int) -> dict[str, Any]:
         raise NotFound()
     return _team_view(db, team)
 
-
 def list_teams(db: Database, query: Mapping[str, str]) -> list[dict[str, Any]]:
     """Return one page of teams, paged by the limit and offset query parameters."""
     limit = _parse_query_int(query, "limit", DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE)
@@ -249,3 +247,34 @@ def delete_team(db: Database, user_id: int, team_id: int) -> None:
     if team["owner_id"] != user_id:
         raise Forbidden()
     db.delete_team(team_id)
+
+def team_reactions(db: Database, team_id: int) -> dict[str, Any]:
+    """List the elemental reactions possible between a team's members' elements."""
+    team = get_team(db, team_id)
+    # Distinct elements on the team, lowercased to match the API's slugs
+    elements = sorted({m["vision"].lower() for m in team["members"] if m["vision"]})
+    found: dict[tuple[str, tuple[str, ...]], dict[str, Any]] = {}
+    for slug in elements:
+        try:
+            element = external.fetch_element(slug)
+        except external.EntityNotFound:
+            continue  # no data for this element, so it contributes no reactions
+        except external.ExternalServiceUnavailable as err:
+            raise ServiceUnavailable("Element data service is unavailable") from err
+        own_name = element.get("name", slug.title())
+        for reaction in element.get("reactions", []):
+            for partner in reaction.get("elements", []):
+                if partner.lower() not in elements:
+                    continue  # that partner element isn't on this team
+                pair = tuple(sorted([own_name, partner]))
+                # Keyed by (reaction, pair) so it isn't listed once per element
+                found[(reaction["name"], pair)] = {
+                    "name": reaction["name"],
+                    "elements": list(pair),
+                    "description": reaction.get("description"),
+                }
+    return {
+        "team_id": team_id,
+        "elements": [slug.title() for slug in elements],
+        "reactions": sorted(found.values(), key=lambda item: item["name"]),
+    }

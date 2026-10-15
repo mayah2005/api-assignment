@@ -122,3 +122,15 @@ class TeamDetail(Resource):
         except services.Forbidden:
             return {"message": "You do not own this team"}, 403
         return "", 204
+
+class TeamReactions(Resource):
+    """Elemental reactions possible within a team, using the external API."""
+
+    def get(self, team_id: int) -> tuple[Any, int]:
+        """Return the reactions between the elements on a team."""
+        try:
+            return services.team_reactions(get_db(), team_id), 200
+        except services.NotFound:
+            return {"message": "Team not found"}, 404
+        except services.ServiceUnavailable as err:
+            return {"message": str(err)}, 502
