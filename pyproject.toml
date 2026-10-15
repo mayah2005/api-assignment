@@ -1,0 +1,28 @@
+[project]
+name = "cs188-a3"
+version = "0.1.0"
+description = "A multi-user CRUD API built with Flask"
+readme = "README.md"
+authors = [
+    { name = "coda", email = "maya.hoffmann@drake.edu" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "flask>=3.1.3",
+    "flask-bcrypt>=1.0.1",
+    "flask-restful>=0.3.10",
+    "flask-talisman>=1.1.0",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+cs188-a3 = "cs188_a3:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
