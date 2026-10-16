@@ -17,7 +17,7 @@ def main() -> None:
     run_app()
 
 def init_api(app: Flask) -> Api:
-    api = Api(app)
+    api = Api(app, catch_all_404s=True)
     api.add_resource(Register, "/register")
     api.add_resource(RosterList, "/roster", endpoint="roster_list")
     api.add_resource(RosterEntry, "/roster/<int:entry_id>", endpoint="roster_entry")

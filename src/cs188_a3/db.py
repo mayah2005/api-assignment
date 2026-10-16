@@ -9,7 +9,6 @@ DEFAULT_DB_PATH = "cs188_a3.db"
 
 class Database:
     def __init__(self, path: str | Path = DEFAULT_DB_PATH) -> None:
-        """Open the database at `path` and ensure tables exist."""
         self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row  # rows support access by column name
         self.create_users_table()
@@ -17,7 +16,6 @@ class Database:
         self.create_teams_tables()
 
     def create_users_table(self) -> None:
-        """Create the users table if it does not exist."""
         with self.conn:
             self.conn.execute(
                 """

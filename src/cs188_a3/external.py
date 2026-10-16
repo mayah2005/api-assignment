@@ -19,8 +19,6 @@ class ExternalServiceUnavailable(Exception):
 
 
 def _fetch_entity(entity_type: str, slug: str) -> dict[str, Any]:
-    """Fetch one entity (e.g. a character or element) by slug as a dict."""
-    # quote() keeps odd characters in the slug from changing the URL's path
     url = f"{GENSHIN_API_BASE_URL}/{entity_type}/{quote(slug, safe='')}"
     try:
         response = requests.get(
@@ -45,10 +43,7 @@ def _fetch_entity(entity_type: str, slug: str) -> dict[str, Any]:
 
 
 def fetch_character(slug: str) -> dict[str, Any]:
-    """Fetch one character's details, e.g. 'albedo'."""
     return _fetch_entity(CHARACTERS_PATH, slug)
 
-
 def fetch_element(slug: str) -> dict[str, Any]:
-    """Fetch one element's details and reactions, e.g. 'pyro'."""
     return _fetch_entity(ELEMENTS_PATH, slug)
