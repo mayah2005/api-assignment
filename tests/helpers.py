@@ -34,6 +34,16 @@ FAKE_ELEMENTS: dict[str, dict[str, Any]] = {
     },
 }
 
+NOT_JSON_OBJECTS = [
+    ("not json", "application/json"),
+    ("[1, 2]", "application/json"),
+    ("null", "application/json"),
+    ("", "application/json"),
+    ('{"level": 85}', "text/plain"),
+]
+
+BAD_IDS = ["0", "-1", "abc", "1.5", "99999", str(2**63 - 1), str(2**63), str(2**100)]
+
 class FakeGenshin:
     def __init__(self) -> None:
         self.down = False

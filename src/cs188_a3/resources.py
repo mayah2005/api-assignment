@@ -16,7 +16,6 @@ def parse_json_object() -> dict[str, Any]:
 
 class Register(Resource):
     def post(self) -> tuple[dict[str, Any], int]:
-        """Register a user from a JSON body with username and password."""
         try:
             body = parse_json_object()
             user_id = services.register_user(
@@ -31,7 +30,6 @@ class Register(Resource):
 
 class RosterList(Resource):
     def get(self) -> tuple[Any, int]:
-        """List entries, filtered and paged by query parameters."""
         try:
             entries = services.list_entries(get_db(), request.args)
         except services.InvalidInput as err:
@@ -40,7 +38,6 @@ class RosterList(Resource):
 
     @auth_required
     def post(self) -> tuple[Any, int, dict[str, str]]:
-        """Create an entry owned by the caller."""
         try:
             entry = services.create_entry(get_db(), g.user_id, parse_json_object())
         except services.InvalidInput as err:
@@ -85,7 +82,6 @@ class RosterEntry(Resource):
 
 class TeamList(Resource):
     def get(self) -> tuple[Any, int]:
-        """List teams, paged by limit and offset."""
         try:
             return services.list_teams(get_db(), request.args), 200
         except services.InvalidInput as err:

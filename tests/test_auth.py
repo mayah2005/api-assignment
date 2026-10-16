@@ -78,7 +78,7 @@ def test_password_is_stored_as_hash(app: Flask, client: FlaskClient) -> None:
 
 
 def test_sql_metacharacters_in_username_are_stored_literally(client: FlaskClient) -> None:
-    auth = make_user(client, "bob'; DROP TABLE users; --")
+    auth = make_user(client, "stuart'; DROP TABLE users; --")
     make_user(client, "carol")  # the users table still exists
     assert client.delete("/roster/1", auth=auth).status_code == 404
 

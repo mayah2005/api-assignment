@@ -1,4 +1,3 @@
-"""Shared pytest fixtures: a throwaway-database app and a fake external API."""
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from helpers import FakeGenshin, make_user
 
 @pytest.fixture(autouse=True)
 def fast_password_hashing(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Use bcrypt's minimum cost so register and login stay fast in tests."""
     monkeypatch.setattr(services._bcrypt, "_log_rounds", 4, raising=False)
 
 @pytest.fixture
@@ -30,7 +28,6 @@ def app(tmp_path: Path, fake_genshin: FakeGenshin) -> Flask:
 
 @pytest.fixture
 def client(app: Flask) -> Iterator[FlaskClient]:
-    """A test client for the app."""
     with app.test_client() as client:
         yield client
 
@@ -45,5 +42,5 @@ def maya(client: FlaskClient) -> tuple[str, str]:
     return make_user(client, "maya")
 
 @pytest.fixture
-def bob(client: FlaskClient) -> tuple[str, str]:
-    return make_user(client, "bob")
+def stuart(client: FlaskClient) -> tuple[str, str]:
+    return make_user(client, "stuart")
