@@ -26,3 +26,7 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: tests that call the real external API (skip with -m 'not live')"]

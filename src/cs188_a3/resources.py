@@ -14,10 +14,8 @@ def parse_json_object() -> dict[str, Any]:
         raise services.InvalidInput("Request body must be a JSON object")
     return body
 
-
 class Register(Resource):
     def post(self) -> tuple[dict[str, Any], int]:
-        """Register a user from a JSON body with username and password."""
         try:
             body = parse_json_object()
             user_id = services.register_user(
@@ -32,7 +30,6 @@ class Register(Resource):
 
 class RosterList(Resource):
     def get(self) -> tuple[Any, int]:
-        """List entries, filtered and paged by query parameters."""
         try:
             entries = services.list_entries(get_db(), request.args)
         except services.InvalidInput as err:
@@ -41,7 +38,6 @@ class RosterList(Resource):
 
     @auth_required
     def post(self) -> tuple[Any, int, dict[str, str]]:
-        """Create an entry owned by the caller."""
         try:
             entry = services.create_entry(get_db(), g.user_id, parse_json_object())
         except services.InvalidInput as err:
@@ -86,7 +82,6 @@ class RosterEntry(Resource):
 
 class TeamList(Resource):
     def get(self) -> tuple[Any, int]:
-        """List teams, paged by limit and offset."""
         try:
             return services.list_teams(get_db(), request.args), 200
         except services.InvalidInput as err:
@@ -94,7 +89,6 @@ class TeamList(Resource):
 
     @auth_required
     def post(self) -> tuple[Any, int, dict[str, str]]:
-        """Create a team owned by the caller."""
         try:
             team = services.create_team(get_db(), g.user_id, parse_json_object())
         except services.InvalidInput as err:
@@ -106,7 +100,6 @@ class TeamList(Resource):
 
 class TeamDetail(Resource):
     def get(self, team_id: int) -> tuple[Any, int]:
-        """Return one team with its members."""
         try:
             return services.get_team(get_db(), team_id), 200
         except services.NotFound:
@@ -114,7 +107,6 @@ class TeamDetail(Resource):
 
     @auth_required
     def delete(self, team_id: int) -> tuple[Any, int]:
-        """Delete a team the caller owns."""
         try:
             services.delete_team(get_db(), g.user_id, team_id)
         except services.NotFound:
@@ -124,10 +116,7 @@ class TeamDetail(Resource):
         return "", 204
 
 class TeamReactions(Resource):
-    """Elemental reactions possible within a team, using the external API."""
-
     def get(self, team_id: int) -> tuple[Any, int]:
-        """Return the reactions between the elements on a team."""
         try:
             return services.team_reactions(get_db(), team_id), 200
         except services.NotFound:
