@@ -44,3 +44,11 @@ def maya(client: FlaskClient) -> tuple[str, str]:
 @pytest.fixture
 def stuart(client: FlaskClient) -> tuple[str, str]:
     return make_user(client, "stuart")
+
+@pytest.fixture
+def live_client(tmp_path: Path) -> Iterator[FlaskClient]:
+    """A test client whose external API calls go to the real service."""
+    app = create_app(db_path=tmp_path / "live.db")
+    app.testing = True
+    with app.test_client() as client:
+        yield client
