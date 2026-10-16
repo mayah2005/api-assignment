@@ -10,7 +10,6 @@ from cs188_a3.db import get_db
 def auth_required(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        """Check credentials, then call the wrapped handler."""
         auth = request.authorization
         if auth is None or auth.username is None or auth.password is None:
             return {"message": "Authentication required"}, 401
